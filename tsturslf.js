@@ -24,7 +24,7 @@
   <div class="form-check">
     <input class="form-check-input" type="radio" name="item-answer-${id}" id="item-answer-${id}-${index}" value="${choice.correct ? '1' : '0'}">
     <label class="form-check-label" for="item-answer-${id}-${index}">
-      ${indexToLetter(index)}. ${choice.label}
+      ${choice.label}
     </label>
   </div>
   `).join('');
