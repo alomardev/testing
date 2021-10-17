@@ -1,5 +1,7 @@
 (async function () {
   /* Constants */
+  const queryParams = Object.fromEntries(new URLSearchParams(window.location.search));
+  const readonly = queryParams.mode?.toLowerCase() === 'readonly';
   const letters = ['A', 'B', 'C', 'D'];
   const questionFile = 'questions.json';
 
@@ -7,6 +9,7 @@
   const letterToIndex = (letter) => letters.indexOf(letter?.toUpperCase());
   const indexToLetter = (index) => letters[index];
   const shuffle = (array) => {
+    if (readonly) return [...array];
     let currentIndex = array.length
     let randomIndex;
     while (currentIndex != 0) {
@@ -18,7 +21,7 @@
   }
 
   /* Templates */
-  const questionTemplate = (item) => item.data.question.split('\n').map(q => `<p>${q}</p>`).join('');
+  const questionTemplate = (item, itemIndex) => item.data.question.split('\n').map(q => `<p>${q}</p>`).join('');
   const noteTemplate = (item) => item.data.note?.split('\n').map(n => `<p><em>${n}</em></p>`).join('') ?? '';
   const choicesTemplate = (item, id) => item.data.choices.map((choice, index) => `
   <div class="form-check">
@@ -31,6 +34,9 @@
 
   const itemTemplate = (item, itemIndex) => `
   <div class="card mt-3" id="item-${itemIndex}" data-item="${itemIndex}"}>
+  <div class="card-header">
+    <strong>Question ${itemIndex + 1}</strong>
+  </div>
   <div class="card-body">
     <div class="question-block">
       <div class="question">
@@ -44,7 +50,7 @@
         <hr>
         <div class="d-flex flex-column-reverse flex-md-row-reverse align-items-md-center">
           <button type="button" class="btn btn-primary flex-shrink-0" id="item-submit-${itemIndex}">Submit Answer</button>
-          <button type="button" class="btn btn-outline-primary flex-shrink-0 me-md-2 me-0 mb-2 mb-md-0 ${item.data.note ? '' : 'd-none'}" id="item-toggle-note-${itemIndex}">Toggle Note</button>
+          <button type="button" class="btn btn-outline-primary flex-shrink-0 me-md-2 me-0 mb-2 mb-md-0 ${!!item.data.note ? '' : 'd-none'}" id="item-toggle-note-${itemIndex}">Toggle Note</button>
           <div class="note me-auto pe-md-3 pe-0 mb-3 mb-md-0 d-none" id="item-note-${itemIndex}">
             ${noteTemplate(item)}
           </div>
@@ -105,7 +111,25 @@
     const $noteElement = item.elements.note = $element.find(`#item-note-${itemIndex}`);
     const $noteToggle = item.elements.noteToggle = $element.find(`#item-toggle-note-${itemIndex}`);
     const $submitBtn = item.elements.submit = $element.find(`#item-submit-${itemIndex}`);
-    item.elements.choices = $element.find(`input[name="item-answer-${itemIndex}"]`);
+    const $choices = item.elements.choices = $element.find(`input[name="item-answer-${itemIndex}"]`);
+
+    if (readonly) {
+      $('#progress-container').toggleClass('d-none', true);
+      if (!item.data.note) {
+        $element.find('.actions').toggleClass('d-none', true);
+      } else {
+        $noteToggle.toggleClass('d-none', true);
+        $submitBtn.toggleClass('d-none', true);
+        $noteElement.toggleClass('d-none', false);
+      }
+      $choices.each((_, choiceElement) => {
+        const $el = $(choiceElement);
+        $el.prop('checked', choiceElement.value === '1');
+        $el.prop('disabled', choiceElement.value !== '1');
+        $el.toggleClass('is-valid', choiceElement.value === '1');
+      });
+    }
+
     $noteToggle.on('click', () => {
       item.toggledNote = !item.toggledNote;
       $noteElement.toggleClass('d-none', item);
