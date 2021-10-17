@@ -113,8 +113,8 @@
     const $submitBtn = item.elements.submit = $element.find(`#item-submit-${itemIndex}`);
     const $choices = item.elements.choices = $element.find(`input[name="item-answer-${itemIndex}"]`);
 
+    $('#progress-container').toggleClass('d-none', readonly);
     if (readonly) {
-      $('#progress-container').toggleClass('d-none', true);
       if (!item.data.note) {
         $element.find('.actions').toggleClass('d-none', true);
       } else {
